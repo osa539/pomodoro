@@ -268,9 +268,30 @@ export default function Timer() {
             console.log('💾 Saving session to database:', sessionData)
             
             // Save to database asynchronously
-            dbOperations.createSession(sessionData).then(result => {
+            dbOperations.createSession(sessionData).then(async result => {
               if (result) {
                 console.log('✅ Session saved successfully!')
+                
+                // Update user profile with aggregated stats
+                try {
+                  const currentProfile = await dbOperations.getUserProfile(user.id)
+                  if (currentProfile) {
+                    const updatedProfile = {
+                      total_study_time: currentProfile.total_study_time + studyingSeconds,
+                      total_sessions: currentProfile.total_sessions + 1,
+                      last_session_date: new Date().toISOString()
+                    }
+                    
+                    const profileUpdated = await dbOperations.updateUserProfile(user.id, updatedProfile)
+                    if (profileUpdated) {
+                      console.log('✅ User profile updated successfully!')
+                    } else {
+                      console.error('❌ Failed to update user profile')
+                    }
+                  }
+                } catch (profileError) {
+                  console.error('❌ Error updating user profile:', profileError)
+                }
               } else {
                 console.error('❌ Failed to save session')
               }
