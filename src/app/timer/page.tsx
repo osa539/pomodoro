@@ -407,38 +407,44 @@ export default function Timer() {
         </h1>
         <div className="mb-12 relative flex items-center justify-center w-80 h-80">
           {/* Progress Ring */}
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
+          <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 200 200">
+            {/* Background ring */}
             <circle
               cx="100"
               cy="100"
-              r="90"
+              r="75"
               fill="none"
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="6"
               className="text-gray-200 dark:text-gray-800"
             />
+            {/* Progress ring */}
             <circle
               cx="100"
               cy="100"
-              r="90"
+              r="75"
               fill="none"
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="6"
               strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 90}
+              strokeDasharray={2 * Math.PI * 75}
               strokeDashoffset={
                 ((sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) - secondsLeft) /
-                (sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) * (2 * Math.PI * 90)
+                (sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) * (2 * Math.PI * 75)
               }
               className={`${sessionType === FOCUS ? 'text-blue-500 dark:text-blue-400' : 'text-green-500 dark:text-green-400'} transition-all duration-1000`}
-              style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
+              style={{ 
+                filter: 'drop-shadow(0 0 6px currentColor)',
+                strokeDasharray: `${2 * Math.PI * 75}`,
+                strokeDashoffset: ((sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) - secondsLeft) / (sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) * (2 * Math.PI * 75)
+              }}
             />
           </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-8xl font-black text-gray-900 dark:text-white tracking-tight tabular-nums" style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>
+          <div className="relative z-10 flex flex-col items-center justify-center max-w-[200px]">
+            <span className="text-6xl font-black text-gray-900 dark:text-white tracking-tight tabular-nums text-center" style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em' }}>
               {formatTime(secondsLeft)}
             </span>
-            <span className="mt-3 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <span className="mt-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">
               {sessionType === FOCUS ? '🎯 Focus Mode' : '☕ Break Time'}
             </span>
           </div>
