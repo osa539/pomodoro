@@ -320,15 +320,23 @@ export default function Timer() {
 
   const handleStart = () => {
     setIsRunning(true)
-    setDistractedSeconds(0) // Reset counters when starting
-    setStudyingSeconds(0)
-    console.log('▶️ Timer started - counters reset')
+    // Only reset counters if starting fresh (not resuming from pause)
+    if (secondsLeft === (sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60)) {
+      setDistractedSeconds(0)
+      setStudyingSeconds(0)
+      console.log('▶️ Timer started fresh - counters reset')
+    } else {
+      console.log('▶️ Timer resumed - counters preserved')
+    }
   }
-  const handlePause = () => setIsRunning(false)
+  const handlePause = () => {
+    setIsRunning(false)
+    console.log('⏸️ Timer paused - counters preserved')
+  }
   const handleReset = () => {
     setIsRunning(false)
     setSecondsLeft(sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60)
-    setDistractedSeconds(0) // Reset counters
+    setDistractedSeconds(0)
     setStudyingSeconds(0)
     console.log('🔄 Timer reset - counters cleared')
   }
@@ -393,9 +401,11 @@ export default function Timer() {
         </div>
       )}
 
-      <div className="w-full max-w-md mx-auto rounded-xl shadow-2xl bg-white dark:bg-gray-900 p-8 flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">Pomodoro Timer</h1>
-        <div className="mb-12 relative flex items-center justify-center w-72 h-72">
+      <div className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl bg-white dark:bg-gray-900 p-10 flex flex-col items-center border border-gray-200 dark:border-gray-800">
+        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-10 tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          🍅 Pomodoro Timer
+        </h1>
+        <div className="mb-12 relative flex items-center justify-center w-80 h-80">
           {/* Progress Ring */}
           <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
             <circle
@@ -404,8 +414,8 @@ export default function Timer() {
               r="90"
               fill="none"
               stroke="currentColor"
-              strokeWidth="12"
-              className="text-gray-200 dark:text-gray-700"
+              strokeWidth="8"
+              className="text-gray-200 dark:text-gray-800"
             />
             <circle
               cx="100"
@@ -413,19 +423,23 @@ export default function Timer() {
               r="90"
               fill="none"
               stroke="currentColor"
-              strokeWidth="12"
+              strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 90}
               strokeDashoffset={
                 ((sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) - secondsLeft) /
                 (sessionType === FOCUS ? focusDuration * 60 : breakDuration * 60) * (2 * Math.PI * 90)
               }
-              className="text-blue-600 dark:text-blue-400 transition-all duration-1000"
+              className={`${sessionType === FOCUS ? 'text-blue-500 dark:text-blue-400' : 'text-green-500 dark:text-green-400'} transition-all duration-1000`}
+              style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
             />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-7xl font-mono font-bold text-gray-900 dark:text-white tracking-wider">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-8xl font-black text-gray-900 dark:text-white tracking-tight tabular-nums" style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>
               {formatTime(secondsLeft)}
+            </span>
+            <span className="mt-3 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {sessionType === FOCUS ? '🎯 Focus Mode' : '☕ Break Time'}
             </span>
           </div>
         </div>
@@ -453,67 +467,69 @@ export default function Timer() {
                 <span>📱 Distracted</span>
               </div>
             )}
-            {/* Show detected objects in debug mode */}
-            {detectedObjects.length > 0 && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Detected: {detectedObjects.slice(0, 3).join(', ')}
-              </div>
-            )}
             
-            {/* Show studying vs distracted time */}
-            {isRunning && sessionType === FOCUS && (
-              <div className="mt-4 flex gap-4 justify-center">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-gray-700 dark:text-gray-300">
-                    Studying: <strong className="text-green-600 dark:text-green-400">{formatTime(studyingSeconds)}</strong>
-                  </span>
+            {/* Show studying vs distracted time - ONLY during focus mode */}
+            {sessionType === FOCUS && (studyingSeconds > 0 || distractedSeconds > 0) && (
+              <div className="mt-4 flex gap-6 justify-center bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-inner">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Studying</span>
+                  </div>
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{formatTime(studyingSeconds)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-gray-700 dark:text-gray-300">
-                    Distracted: <strong className="text-red-600 dark:text-red-400">{formatTime(distractedSeconds)}</strong>
-                  </span>
+                <div className="w-px bg-gray-300 dark:bg-gray-600"></div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Distracted</span>
+                  </div>
+                  <span className="text-2xl font-bold text-red-600 dark:text-red-400 tabular-nums">{formatTime(distractedSeconds)}</span>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        <div className="flex space-x-4 mb-8">
+        <div className="flex space-x-3 mb-6">
           <button
-            className="px-6 py-3 rounded-xl bg-green-600 text-white text-lg font-semibold shadow hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400"
+            className={`px-8 py-4 rounded-xl text-white text-base font-bold shadow-lg transition-all transform ${
+              isRunning 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 hover:shadow-xl active:scale-95'
+            } focus:outline-none focus:ring-4 focus:ring-green-300`}
             onClick={handleStart}
             disabled={isRunning}
           >
-            Start
+            ▶️ Start
           </button>
           <button
-            className="px-6 py-3 rounded-xl bg-gray-600 text-white text-lg font-semibold shadow hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className={`px-8 py-4 rounded-xl text-white text-base font-bold shadow-lg transition-all transform ${
+              !isRunning 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-orange-500 to-yellow-600 hover:from-orange-600 hover:to-yellow-700 hover:scale-105 hover:shadow-xl active:scale-95'
+            } focus:outline-none focus:ring-4 focus:ring-orange-300`}
             onClick={handlePause}
             disabled={!isRunning}
           >
-            Pause
+            ⏸️ Pause
           </button>
           <button
-            className="px-6 py-3 rounded-xl bg-red-600 text-white text-lg font-semibold shadow hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+            className="px-8 py-4 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white text-base font-bold shadow-lg hover:from-red-600 hover:to-pink-700 transition-all transform hover:scale-105 hover:shadow-xl active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-300"
             onClick={handleReset}
           >
-            Reset
+            🔄 Reset
           </button>
         </div>
-        <div className="mt-4 text-center">
-          <span className="inline-block px-6 py-2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-medium text-lg shadow">
-            {sessionType}
-          </span>
-        </div>
         {/* Settings Card */}
-        <div className="w-full mt-8">
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-800 shadow p-6 flex flex-col items-center">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Settings</h2>
-            <div className="flex space-x-6">
-              <div>
-                <label htmlFor="focus" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Focus (minutes)</label>
+        <div className="w-full mt-6">
+          <div className="rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg p-6 flex flex-col items-center border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-5 flex items-center gap-2">
+              ⚙️ Duration Settings
+            </h2>
+            <div className="flex space-x-8">
+              <div className="flex flex-col items-center">
+                <label htmlFor="focus" className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">🎯 Focus</label>
                 <input
                   id="focus"
                   type="number"
@@ -521,12 +537,13 @@ export default function Timer() {
                   max={60}
                   value={focusDuration}
                   onChange={handleFocusChange}
-                  className="block w-20 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-center text-lg bg-white dark:bg-gray-700 dark:text-white shadow-sm"
+                  className="block w-24 px-4 py-3 rounded-xl border-2 border-blue-300 dark:border-blue-600 focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-center text-xl font-bold bg-white dark:bg-gray-700 dark:text-white shadow-sm transition-all"
                   disabled={isRunning}
                 />
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">minutes</span>
               </div>
-              <div>
-                <label htmlFor="break" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Break (minutes)</label>
+              <div className="flex flex-col items-center">
+                <label htmlFor="break" className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">☕ Break</label>
                 <input
                   id="break"
                   type="number"
@@ -534,9 +551,10 @@ export default function Timer() {
                   max={30}
                   value={breakDuration}
                   onChange={handleBreakChange}
-                  className="block w-20 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-center text-lg bg-white dark:bg-gray-700 dark:text-white shadow-sm"
+                  className="block w-24 px-4 py-3 rounded-xl border-2 border-green-300 dark:border-green-600 focus:ring-4 focus:ring-green-200 focus:border-green-500 text-center text-xl font-bold bg-white dark:bg-gray-700 dark:text-white shadow-sm transition-all"
                   disabled={isRunning}
                 />
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">minutes</span>
               </div>
             </div>
           </div>
