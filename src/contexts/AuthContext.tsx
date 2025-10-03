@@ -53,13 +53,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, username: string) => {
+    // Get the current site URL
+    const getSiteUrl = () => {
+      if (typeof window !== 'undefined') {
+        return window.location.origin
+      }
+      return 'http://localhost:3000' // fallback
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           username,
-        }
+        },
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`
       }
     })
     return { error }
