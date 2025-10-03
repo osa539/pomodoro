@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import * as cocoSsd from '@tensorflow-models/coco-ssd'
 import '@tensorflow/tfjs'
+import { useAuth } from '../../contexts/AuthContext'
+import { dbOperations } from '../../../lib/database'
 
 const FOCUS = 'Focus'
 const BREAK = 'Break'
@@ -17,6 +19,7 @@ function formatTime(secs: number) {
 
 
 export default function Timer() {
+  const { user } = useAuth()
   const [sessionType, setSessionType] = useState<typeof FOCUS | typeof BREAK>(FOCUS)
   const [focusDuration, setFocusDuration] = useState(25)
   const [breakDuration, setBreakDuration] = useState(5)
@@ -247,17 +250,37 @@ export default function Timer() {
         if (prev > 0) return prev - 1
         // Session ended
         if (sessionType === FOCUS) {
-          // Save to localStorage with actual studying and distracted time
+          // Save to Supabase database with actual studying and distracted time
           const actualStudyingMinutes = Math.floor(studyingSeconds / 60)
           const actualDistractedMinutes = Math.floor(distractedSeconds / 60)
-          const entry = {
-            date: new Date().toISOString(),
-            focusMinutes: actualStudyingMinutes, // Only studying time counts
-            distractedMinutes: actualDistractedMinutes,
+          
+          // Only save if user is authenticated
+          if (user) {
+            const sessionData = {
+              user_id: user.id,
+              duration: studyingSeconds, // Save studying time in seconds
+              completed_at: new Date().toISOString(),
+              session_type: 'focus' as const,
+              distractions_detected: actualDistractedMinutes,
+              was_completed: true
+            }
+            
+            console.log('💾 Saving session to database:', sessionData)
+            
+            // Save to database asynchronously
+            dbOperations.createSession(sessionData).then(result => {
+              if (result) {
+                console.log('✅ Session saved successfully!')
+              } else {
+                console.error('❌ Failed to save session')
+              }
+            }).catch(error => {
+              console.error('❌ Error saving session:', error)
+            })
+          } else {
+            console.log('⚠️ User not authenticated, session not saved')
           }
-          console.log('💾 Saving session:', entry)
-          const prevSessions = JSON.parse(localStorage.getItem('pomodoro_sessions') || '[]')
-          localStorage.setItem('pomodoro_sessions', JSON.stringify([...prevSessions, entry]))
+          
           // Reset counters
           setDistractedSeconds(0)
           setStudyingSeconds(0)

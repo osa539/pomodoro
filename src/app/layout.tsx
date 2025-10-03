@@ -3,12 +3,13 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Pomodoro Timer',
-  description: 'A simple Pomodoro timer built with Next.js',
+  title: 'AI Pomodoro Timer',
+  description: 'AI-powered Pomodoro timer with distraction detection',
 }
 
 export default function RootLayout({
@@ -20,8 +21,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <Navigation />
-          <main>{children}</main>
+          <AuthProvider>
+            <Navigation />
+            <main>{children}</main>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

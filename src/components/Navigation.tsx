@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/components/ThemeProvider'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 
 const Navigation = () => {
   const pathname = usePathname()
   const { isDark, toggleTheme } = useTheme()
+  const { user, signOut, loading } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -49,8 +51,8 @@ const Navigation = () => {
               ))}
             </div>
           </div>
-          {/* Theme Switcher */}
-          <div className="flex items-center space-x-2">
+          {/* Theme Switcher + Auth */}
+          <div className="flex items-center space-x-4">
             {mounted && (
               <button
                 onClick={toggleTheme}
@@ -67,6 +69,32 @@ const Navigation = () => {
                   </svg>
                 )}
               </button>
+            )}
+            
+            {/* Auth buttons */}
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="hidden sm:flex items-center space-x-3">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Welcome, {user.user_metadata?.username || user.email?.split('@')[0]}
+                    </span>
+                    <button
+                      onClick={signOut}
+                      className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href="/auth"
+                    className="hidden sm:block px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </>
             )}
             {/* Mobile menu button */}
             <div className="sm:hidden flex items-center">
